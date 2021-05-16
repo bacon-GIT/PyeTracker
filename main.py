@@ -2,6 +2,7 @@ from bs4 import BeautifulSoup
 from datetime import datetime
 import requests
 import logging
+import json
 import time
 import sys
 import os
@@ -16,8 +17,7 @@ class Connector:
 
     def getPyePrice(self):
         logging.info("Connecting to livewatchcoin.com to get CreamPye Price")
-
-        URL = 'https://www.livecoinwatch.com/price/CreamPYE-PYE'
+        URL = f'https://api.pancakeswap.info/api/tokens/{self.config.PyeAddr}'
         page = requests.get(URL)
 
         if page.status_code != 200:
@@ -25,10 +25,8 @@ class Connector:
         else:
             logging.info(page.status_code)
 
-        soup = BeautifulSoup(page.content, 'html.parser')
-        self.config.PyePrice = soup.find('div', class_='cion-item coin-price-large').get_text().split("<")[0].strip("$")
-        self.config.PyePriceChangeHour = soup.find('span', class_='percent d-block d-lg-none').get_text()
-        return self.config.PyePrice, self.config.PyePriceChangeHour
+        self.config.PyePrice = json.loads(page.text)["data"]["price"]
+        return self.config.PyePrice
 
     def getPyeHodlers(self):
         logging.info("Connecting to bscscan to get CreamPye hodlers")
@@ -49,10 +47,10 @@ class Connector:
 def main():
     connector = Connector()
 
-    # print(os.path.exists(".\\user_profile.pye"))
+    print(os.path.exists("./user_profile.pye"))
 
     try:
-        if os.path.exists(".\\user_profile.pye"):
+        if os.path.exists("./user_profile.pye"):
             with open("user_profile.pye", "r") as fp:
                 entries = fp.readlines()
                 connector.config.Name = entries[0]
@@ -72,7 +70,6 @@ def main():
 
                 fp.write(f"{connector.config.Name}\n")
                 fp.write(connector.config.AmountHolding)
-                print("Here")
 
     except IndexError:
         print("User Profile Error, cleaning up, please relaunch!!")
@@ -81,7 +78,8 @@ def main():
         # os.execv(sys.executable, ['python'] + sys.argv)
 
     while True:
-        price = float(connector.getPyePrice()[0]) * int(connector.config.AmountHolding)
+        price = float(connector.getPyePrice()) * int(connector.config.AmountHolding)
+
         priceChange = connector.config.PyePriceChangeHour
         hodlers = connector.getPyeHodlers()
         banner = """
@@ -90,7 +88,6 @@ Welcome, {name}
 
 Current Time: {time}   
 Current Wallet Value: ${price}
-Last Hour % Change: {priceChange}
 Current Pye Hodlers: {hodlers}
 
 --------------------------------""".format(name=connector.config.Name,
