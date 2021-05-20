@@ -4,4 +4,10 @@
 * Better UX lmao
 * Wallet integration for more accurate tracking
 
+Notes for other devs:
+### Requirements:
+* Tkinter
+* BeautifulSoup
+* Requests
+
 ![logo](/assets/logo.png)
