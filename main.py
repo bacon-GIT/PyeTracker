@@ -2,6 +2,7 @@ import tkinter as tk
 from PIL import Image, ImageTk
 from bs4 import BeautifulSoup
 from datetime import datetime
+import decimal
 import requests
 import logging
 import json
@@ -80,21 +81,21 @@ class App():
     def update_clock(self):
 
         price = float(self.getPyePrice()) * int(self.config.AmountHolding)
-        priceChange = self.config.PyePriceChangeHour
         hodlers = self.getPyeHodlers()
         banner = r"""
 Welcome {name}
 {time}      
 ~~~~~~~~
 Wallet Value: ${price}
+Pye Price: {pyeprice}
 Pye Hodlers: {hodlers}
 """.format(name=self.config.Name,
-           price=str(price)[:9],
+           price=decimal.Decimal(str(price)).quantize(decimal.Decimal(10) ** -2),
            time=datetime.now(),
-           priceChange=priceChange,
+           pyeprice=self.config.PyePrice[:12],
            hodlers=hodlers.strip("\n"))
         self.label.configure(text=banner)
-        self.root.after(1000, self.update_clock)
+        self.root.after(10000, self.update_clock)
 
     def getPyePrice(self):
         logging.info("Connecting to livewatchcoin.com to get CreamPye Price")
